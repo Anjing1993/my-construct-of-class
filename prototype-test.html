@@ -1,0 +1,436 @@
+<<!DOCTYPE html>
+<html>
+<head>
+	<title></title>
+	<script type="text/javascript">
+	//1.
+	  // function Person(name, sex) {
+   //      this.name = name;
+   //      this.sex = sex;
+   //  }
+   //  // 定义Person的原型，原型中的属性可以被自定义对象引用
+   //  Person.prototype = {
+   //      getName: function() {
+   //          return this.name;
+   //      },
+   //      getSex: function() {
+   //          return this.sex;
+   //      }
+   //  }
+   //    function Employee(name, sex, employeeID) {
+   //      this.name = name;
+   //      this.sex = sex;
+   //      this.employeeID = employeeID;
+   //  }
+   //  // 将Employee的原型指向Person的一个实例
+   //  // 因为Person的实例可以调用Person原型中的方法, 所以Employee的实例也可以调用Person原型中的所有属性。
+   //  Employee.prototype = new Person();
+   //  Employee.prototype.getEmployeeID = function() {
+   //      return this.employeeID;
+   //  };
+   //  var zhang = new Employee("ZhangSan", "man", "1234");
+   //  console.log(zhang.getName()); // "ZhangSan
+   //2.防止一开始就初始化构造函数
+    // 空的构造函数
+
+// function Person() {
+
+// }
+
+// Person.prototype = {
+
+// init: function(name) {
+
+// this.name = name;
+
+// },
+
+// getName: function() {
+
+// return this.name;
+
+// }
+
+// }
+
+// // 空的构造函数
+
+// function Employee() {
+
+// }
+
+// // 创建类的阶段不会初始化父类的数据，因为Person是一个空的构造函数
+
+// Employee.prototype = new Person();
+
+// Employee.prototype.constructor = Employee;
+
+// Employee.prototype.init = function(name, employeeID) {
+
+// this.name = name;
+
+// this.employeeID = employeeID;
+
+// };
+
+// Employee.prototype.getEmployeeID = function() {
+
+// return this.employeeID;
+
+// };
+
+// //这种方式下，必须在实例化一个对象后手工调用init函数，如下：
+//  var zhang = new Employee();
+
+// zhang.init("ZhangSan", "1234");
+
+// console.log(zhang.getName()); // "ZhangSan"
+	//3.实例化对象时自动调用init函数
+	//必须达到两个效果，构造类时不要调用init函数和实例化对象时自动调用init函数。看来我们需要在调用空的构造函数时有一个状态标示。
+
+ // 创建一个全局的状态标示 - 当前是否处于类的构造阶段
+
+// var initializing = false;
+
+// function Person() {
+
+// if (!initializing) {
+
+// this.init.apply(this, arguments);
+
+// }
+
+// }
+
+// Person.prototype = {
+
+// init: function(name) {
+
+// this.name = name;
+
+// },
+
+// getName: function() {
+
+// return this.name;
+
+// }
+
+// }
+
+// function Employee() {
+
+// if (!initializing) {
+
+// this.init.apply(this, arguments);
+
+// }
+
+// }
+
+// // 标示当前进入类的创建阶段，不会调用init函数
+
+// initializing = true;
+
+// Employee.prototype = new Person();
+
+// Employee.prototype.constructor = Employee;
+
+// initializing = false;
+
+// Employee.prototype.init = function(name, employeeID) {
+
+// this.name = name;
+
+// this.employeeID = employeeID;
+
+// };
+
+// Employee.prototype.getEmployeeID = function() {
+
+// return this.employeeID;
+
+// };
+
+
+
+// // 初始化类实例时，自动调用类的原型函数init，并向init中传递参数
+
+// var zhang = new Employee("ZhangSan", "1234");
+
+// console.log(zhang.getName()); // "ZhangSan"
+ 	//4.避免引入全局变量
+ 	//我们需要引入一个全局的函数来简化类的创建过程，同时封装内部细节避免引入全局变量。
+
+ // 当前是否处于创建类的阶段
+
+// var initializing = false;
+
+// function jClass(baseClass, prop) {
+
+// // 只接受一个参数的情况 - jClass(prop)，类似与var person=jclass({nama:name})
+// //接受两个参数---类似于var child=jclass(person,{age:age})
+
+// if (typeof (baseClass) === "object") {
+
+// prop = baseClass;
+
+// baseClass = null;
+
+// }
+
+// // 本次调用所创建的类（构造函数）
+
+// function F() {
+
+// // 如果当前处于实例化类的阶段，则调用init原型函数
+
+// if (!initializing) {
+
+// this.init.apply(this, arguments);
+
+// }
+
+// }
+
+// // 如果此类需要从其它类扩展
+
+// if (baseClass) {
+
+// initializing = true;
+
+// F.prototype = new baseClass();
+
+// F.prototype.constructor = F;
+
+// initializing = false;
+
+// }
+
+// // 覆盖父类的同名函数
+
+// for (var name in prop) {
+
+// if (prop.hasOwnProperty(name)) {
+
+// F.prototype[name] = prop[name];
+
+// }
+
+// }
+
+// return F;
+
+// };
+
+// //使用jClass函数来创建类和继承类的方法：
+//  var Person = jClass({
+
+// init: function(name) {
+
+// this.name = name;
+
+// },
+
+// getName: function() {
+
+// return this.name;
+
+// }
+
+// });
+
+// var Employee = jClass(Person, {
+
+// init: function(name, employeeID) {
+
+// this.name = name;
+
+// this.employeeID = employeeID;
+
+// },
+
+// getEmployeeID: function() {
+
+// return this.employeeID;
+
+// }
+
+// });
+
+
+
+// var zhang1 = new Person("ZhangSan1");
+// var zhang2 = new Employee("ZhangSan2", "1234");
+
+// console.log(zhang1.getName()); // "ZhangSan"
+// console.log(zhang2.getName());
+//但，无法调用父类同名函数，修正
+
+//5.
+// 当前是否处于创建类的阶段
+
+var initializing = false;
+
+function jClass(baseClass, prop) {
+
+// 只接受一个参数的情况 - jClass(prop)
+
+if (typeof (baseClass) === "object") {
+
+prop = baseClass;
+
+baseClass = null;
+
+}
+
+// 本次调用所创建的类（构造函数）
+
+function F() {
+
+// 如果当前处于实例化类的阶段，则调用init原型函数
+
+if (!initializing) {
+
+// 如果父类存在，则实例对象的baseprototype指向父类的原型
+
+// 这就提供了在实例对象中调用父类方法的途径
+
+if (baseClass) {
+
+this.baseprototype = baseClass.prototype;
+
+}
+
+this.init.apply(this, arguments);
+
+}
+
+}
+
+// 如果此类需要从其它类扩展
+
+if (baseClass) {
+
+initializing = true;
+
+F.prototype = new baseClass();
+
+F.prototype.constructor = F;
+
+initializing = false;
+
+}
+
+// 覆盖父类的同名函数
+
+for (var name in prop) {
+
+if (prop.hasOwnProperty(name)) {
+
+// 如果此类继承自父类baseClass并且父类原型中存在同名函数name
+
+if (baseClass &&
+
+typeof (prop[name]) === "function" &&
+
+typeof (F.prototype[name]) === "function") {
+
+
+
+// 重定义函数name - 
+
+// 首先在函数上下文设置this.base指向父类原型中的同名函数
+
+// 然后调用函数prop[name]，返回函数结果
+
+
+
+// 注意：这里的自执行函数创建了一个上下文，这个上下文返回另一个函数，
+
+// 此函数中可以应用此上下文中的变量，这就是闭包（Closure）。
+
+// 这是JavaScript框架开发中常用的技巧。
+
+F.prototype[name] = (function(name, fn) {
+
+return function() {
+
+this.base = baseClass.prototype[name];
+
+return fn.apply(this, arguments);
+
+};
+
+})(name, prop[name]);
+
+
+
+} else {
+
+F.prototype[name] = prop[name];
+
+}
+
+}
+
+}
+
+return F;
+
+};
+
+//此时，创建类与子类以及调用方式都显得非常优雅，请看：
+ var Person = jClass({
+
+init: function(name) {
+
+this.name = name;
+
+},
+
+getName: function() {
+
+return this.name;
+
+}
+
+});
+
+var Employee = jClass(Person, {
+
+init: function(name, employeeID) {
+
+this.base(name);
+
+this.employeeID = employeeID;
+
+},
+
+getEmployeeID: function() {
+
+return this.employeeID;
+
+},
+
+getName: function() {
+
+return "Employee name: " + this.base();
+
+}
+
+});
+
+
+
+var zhang = new Employee("ZhangSan", "1234");
+
+console.log(zhang.getName()); // "Employee name: ZhangSan"
+
+     
+	</script>
+</head>
+<body>
+
+</body>
+</html>

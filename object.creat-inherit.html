@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title></title>
+	<script type="text/javascript">
+    var Parent = {
+    	getUrl:function(){
+    		return this.url;
+    	},
+		getName: function() {
+			return this.name;
+		  }
+    }
+	var child = Object.create(Parent, {
+		name: { value: "Benjamin"},
+		url : { value: "http://www.zuojj.com"}
+	});
+	//Outputs: Object {name: "Benjamin", url: "http://www.zuojj.com", getName: function}
+	console.log(Parent);
+	console.log(child);
+	//Outputs: Benjamin
+	console.log(child.getName());
+	console.log(child.getUrl);
+
+	
+	</script>
+</head>
+<body>
+
+</body>
+</html>

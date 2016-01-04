@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title></title>
+  <script type="text/javascript">
+  var flag = false;
+  function Class(parent, prop){
+       if(typeof (parent) === 'object'){
+        prop = parent;
+        parent = null;
+       }
+       //全程调用的构造函数
+       function createConsturctor(){
+          if(!flag){  //在实例化阶段去调用init函数
+            if(parent){  //如果父类存在，就将当前对象的baseprototype指向父类的原型，便于后面在实例对象中调用父类
+              this.baseprototype = parent.prototype;
+            }
+            this.init.apply(this, arguments);}
+          
+       }
+       //若是需要从其他类扩展，则需要进行实例化实现继承
+       if(parent){
+           flag = true;
+           createConsturctor.prototype = new parent();
+           createConsturctor.prototype.constructor = createConsturctor;
+           flag = false;  //类的实例化结束，标志位初始化
+       }
+       //复制父类的同名函数
+       for(var name in prop){
+        if(prop.hasOwnProperty(name)){
+          //如果存在父类，并且当前本身，父类原型中存在同名函数，就调用父类的同名函数prop[name],返回结果
+          if(parent && typeof (prop[name]) ==='function' && typeof (createConsturctor.prototype[name]) === 'function'){
+              createConsturctor.prototype[name]=(function(name, fn){
+                      return function(){
+                        this.base = parent.prototype[name];
+                        return fn.apply(this, arguments);
+                      }
+              })(name, prop[name]);
+          }else{
+            createConsturctor.prototype[name] = prop[name]; 
+          }
+          
+        }
+       }
+       return createConsturctor;//构造函数作为返回值
+  }
+
+  //调用
+  var Person = Class({
+    init : function(name){
+      this.name = name;
+    },
+    getName : function(){
+      return this.name;
+    } 
+  });
+  var Child = Class(Person,{
+    init:function(name, id){
+          this.base(name);
+          this.id = id;
+    },
+    getId:function(){
+      return this.id;
+    },
+    getName:function(){
+      return this.base();
+    }
+  });
+  console.log(Person);
+  console.log(Child);
+  var p1 = new Person('wangjing');   
+  console.log(p1.getName());          //wangjing
+  var p2 = new Child('wj','123456');
+  console.log(p2.getName());
+  </script>
+</head>
+<body>
+
+</body>
+</html>

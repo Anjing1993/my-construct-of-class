@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title></title>
+	<script type="text/javascript">
+       var flag = false;
+	function Class(parent, prop){
+       if(typeof (parent) === 'object'){
+       	prop = parent;
+       	parent = null;
+       }
+       //全程调用的构造函数
+       function createConsturctor(){
+       	  if(!flag){  //在实例化阶段去调用init函数
+       	  	this.init.apply(this, arguments);
+       	  }
+       }
+       //若是需要从其他类扩展，则需要进行实例化实现继承
+       if(parent){
+           flag = true;
+           createConsturctor.prototype = new parent();
+           createConsturctor.prototype.constructor = createConsturctor;
+           flag = false;  //类的实例化结束，标志位初始化
+       }
+       //复制父类的同名函数
+       if(!parent){
+       	for(var name in prop){
+       	if(prop.hasOwnProperty(name)){
+       		createConsturctor.prototype[name] = prop[name];
+       	}
+       }
+       }
+       return createConsturctor;//构造函数作为返回值
+	}
+	//调用
+	var Person = Class({
+		init : function(name){
+			this.name = name;
+		},
+		getName : function(){
+			return this.name;
+		} 
+	});
+	var Child = Class(Person,{
+		init:function(name, id){
+          this.name = name;//这样写没有起到继承的作用，应该在这里直接调用父级相应的函数
+          this.id = id;
+		},
+		getId:function(){
+			return thid.id;
+		}
+	});
+	var p1 = new Person('wangjing');
+	console.log(p1);
+	console.log(p1.getName());        //wangjing
+	var p2 = new Child('wj','123456');
+	console.log(p2);
+	console.log(p2.getName());
+	console.log(p2.getId());
+	</script>
+</head>
+<body>
+
+</body>
+</html>

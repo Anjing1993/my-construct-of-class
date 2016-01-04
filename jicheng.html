@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title></title>
+	<script type="text/javascript">	
+	//实现一个类的构造器
+	//考察点：继承
+	//实现思路：1.类构造器的返回值必须是一个函数
+	//          2.需要构造的类是直接扩展，还是从其他类扩展
+	//          3.子类中可以直接调用父类的方法中的同名方法 
+	//          4.设置一个标志位，表示目前处于类的构建阶段还是实例化，即构造类时不要调用init函数和实例化对象时自动调用init函数
+	/*****************第一版*********************/
+	// var flag = false;
+	// function Class(parent, prop){
+ //       if(typeof (parent) === 'object'){
+ //       	prop = parent;
+ //       	parent = null;
+ //       }
+ //       //全程调用的构造函数
+ //       function createConsturctor(){
+ //       	  if(!flag){  //在实例化阶段去调用init函数
+ //       	  	this.init.apply(this, arguments);
+ //       	  }
+ //       }
+ //       //若是需要从其他类扩展，则需要进行实例化实现继承
+ //       if(parent){
+ //           flag = true;
+ //           createConsturctor.prototype = new parent();
+ //           createConsturctor.prototype.constructor = createConsturctor;
+ //           flag = false;  //类的实例化结束，标志位初始化
+ //       }
+ //       //复制父类的同名函数
+ //       for(var name in prop){
+ //       	if(prop.hasOwnProperty(name)){
+ //       		createConsturctor.prototype[name] = prop[name];
+ //       	}
+ //       }
+ //       return createConsturctor;//构造函数作为返回值
+	// }
+
+	// //调用
+	// var Person = Class({
+	// 	init : function(name){
+	// 		this.name = name;
+	// 	},
+	// 	getName : function(){
+	// 		return this.name;
+	// 	} 
+	// });
+	// var Child = Class(Person,{
+	// 	init:function(name, id){
+ //          this.name = name;//这样写没有起到继承的作用，应该在这里直接调用父级的同名函数
+ //          this.id = id;
+	// 	},
+	// 	getId:function(){
+	// 		return thid.id;
+	// 	}
+	// });
+	// var p1 = new Person('wangjing');
+	// console.log(p1.getName());        //wangjing
+	// var p2 = new Child('wj','123456');
+	// console.log(p2);                    //createConsturctor {name: "wj", id: "123456"}
+	//运行后结果很显然，是自己想要的结果，但是再回过头去看看代码，我们都知道在原型链的继承中有一个很大的问题：在创建子类的实例时，无法向父类的构造函数中传递参数，​如代码中创建Child类时，this.name=name,这个在它的父类Person中是已经有的，这里应该直接调用的，改进如下一版：
+    /****************第二版******************/
+//      var flag = false;
+// 	function Class(parent, prop){
+//        if(typeof (parent) === 'object'){
+//        	prop = parent;
+//        	parent = null;
+//        }
+//        //全程调用的构造函数
+//        function createConsturctor(){
+//        	  if(!flag){  //在实例化阶段去调用init函数
+//        	  	if(parent){  //如果父类存在，就将当前对象的baseprototype指向父类的原型，便于后面在实例对象中调用父类
+//        	      this.baseprototype = parent.prototype;
+//        	  	}
+//        	  	this.init.apply(this, arguments);}
+       	  
+//        }
+//        //若是需要从其他类扩展，则需要进行实例化实现继承
+//        if(parent){
+//            flag = true;
+//            createConsturctor.prototype = new parent();
+//            createConsturctor.prototype.constructor = createConsturctor;
+//            flag = false;  //类的实例化结束，标志位初始化
+//        }
+//        //复制父类的同名函数
+//        for(var name in prop){
+//        	if(prop.hasOwnProperty(name)){
+//        		//如果存在父类，并且当前本身，父类原型中存在同名函数，就调用父类的同名函数prop[name],返回结果
+//        		if(parent && typeof (prop[name]) ==='function' && typeof (createConsturctor.prototype[name]) === 'function'){
+// //重定义函数name -
+// //首先在函数上下文设置this.base指向父类原型中的同名函数
+// //然后调用函数prop[name]，返回函数结果
+// //注意：这里的自执行函数创建了一个上下文，这个上下文返回另一个函数，
+// //此函数中可以应用此上下文中的变量，这就是闭包（Closure）。
+
+// //这是JavaScript框架开发中常用的技巧。
+//               createConsturctor.prototype[name]=(function(name, fn){
+//                       return function(){
+//                       	this.base = parent.prototype[name];
+//                       	return fn.apply(this, arguments);
+//                       }
+//               })(name, prop[name]);
+//        		}else{
+//        		  createConsturctor.prototype[name] = prop[name];	
+//        		}
+       		
+//        	}
+//        }
+//        return createConsturctor;//构造函数作为返回值
+// 	}
+
+// 	//调用
+// 	var Person = Class({
+// 		init : function(name){
+// 			this.name = name;
+// 		},
+// 		getName : function(){
+// 			return this.name;
+// 		} 
+// 	});
+// 	var Child = Class(Person,{
+// 		init:function(name, id){
+//           this.base(name);
+//           this.id = id;
+// 		},
+// 		getId:function(){
+// 			return this.id;
+// 		},
+// 		getName:function(){
+// 			return this.base();
+// 		}
+// 	});
+// 	console.log(Person);
+// 	console.log(Child);
+// 	var p1 = new Person('wangjing');   
+// 	console.log(p1.getName());          //wangjing
+// 	var p2 = new Child('wj','123456');
+// 	console.log(p2.getName());
+	/*******************第三版*******************/
+	//代码优化，使用object.create()去实现
+	//Object.prototype.create = function(fnc){  
+//    var F = Function (){};  
+//    F.prototype = fnc;  
+//    return new F();  实际上是将fnc添加到新对象的原型上 
+// }  
+	// var flag=false;
+	// var Class=function(parent, prop){
+ //       if(typeof (parent) === 'object'){
+ //       	prop = parent;
+ //       	parent = null;
+ //       }
+ //       var createConsturctor=function (){
+ //          if(!flag){
+ //             	this.init.apply(this, arguments);
+ //          }
+ //       }
+ //        if(!parent){
+ //       	 for(var name in prop){
+ //      	if(prop.hasOwnProperty(name)){
+ //      		createConsturctor.prototype[name] = prop[name];
+ //      	    }
+ //         }
+ //       }
+ //       //若是需要从其他类扩展，则需要进行实例化实现继承
+ //       if(parent){
+ //           flag = true;
+ //           createConsturctor.prototype = Object.create(parent.prototype,prop);
+ //           flag = false;  //类的实例化结束，标志位初始化
+ //       }
+      
+ //       return createConsturctor;//构造函数作为返回值
+	// }
+
+	// //调用
+	// var Person = Class({
+	// 	init : function(name){
+	// 		this.name = name;
+	// 	},
+	// 	getName : function(){
+	// 		return this.name;
+	// 	} 
+	// });
+	// var Child = Class(Person,{
+
+	// 	init:{
+	// 		value:function(name,id){
+	// 			  this.name=name;
+	// 	          this.id = id;
+	// 	      }
+	// 	  },
+	// 	getId:{
+	// 		value:function(){
+	// 			  return this.id;
+	// 			}
+	// 		}
+	// });
+	// var p1 = new Person('wangjing');
+	// console.log(p1);
+	// console.log(p1.getName());          //wangjing
+	// var p2 = new Child('wj','123456');
+	// console.log(p2);
+	// console.log(p2.getName()+' '+p2.getId());
+
+	/*******************第四版*******************/
+	//代码优化
+	// 自执行的匿名函数创建一个上下文，避免引入全局变量
+	//利用匿名函数来创建私有作用域，这些私有作用域只能在内部访问
+	(function(){
+	    var flag = false;
+	    Class=function(){};//这里定义Class为全局变量，是为了在任何地方都可以访问，比如在外面调用的时候
+	    Class.extend=function(parent, prop){
+	    	if(typeof (parent) === 'object'){
+	    		prop = parent;
+	    		parent = null
+	    	}
+	    	// //默认情况下，这里的this是Class
+	    	// if(this!== Class){
+	    	// 	parent = this;
+	    	// }
+       //全程调用的构造函数
+       function createConsturctor(){
+       	  if(!flag){  //在实例化阶段去调用init函数
+       	  	if(parent){  //如果父类存在，就将当前对象的baseprototype指向父类的原型，便于后面在实例对象中调用父类
+       	      this.baseprototype = parent.prototype;
+       	  	}
+       	  	this.init.apply(this, arguments);}
+       	  
+       }
+       //若是需要从其他类扩展，则需要进行实例化实现继承
+       if(parent){
+           flag = true;
+           createConsturctor.prototype = new parent();
+           createConsturctor.prototype.constructor = createConsturctor;
+           flag = false;  //类的实例化结束，标志位初始化
+       }
+       createConsturctor.extend = arguments.callee;
+       //复制父类的同名函数
+       for(var name in prop){
+       	if(prop.hasOwnProperty(name)){
+       		//如果存在父类，并且当前本身，父类原型中存在同名函数，就调用父类的同名函数prop[name],返回结果
+       		if(parent && typeof (prop[name]) ==='function' && typeof (createConsturctor.prototype[name]) === 'function'){
+//重定义函数name -
+//首先在函数上下文设置this.base指向父类原型中的同名函数
+//然后调用函数prop[name]，返回函数结果
+//注意：这里的自执行函数创建了一个上下文，这个上下文返回另一个函数，
+//此函数中可以应用此上下文中的变量，这就是闭包（Closure）。
+
+//这是JavaScript框架开发中常用的技巧。
+              createConsturctor.prototype[name]=(function(name, fn){
+                      return function(){
+                      	this.base = parent.prototype[name];
+                      	return fn.apply(this, arguments);
+                      }
+              })(name, prop[name]);
+       		}else{
+       			//将属性直接复制到类中，可以在类上直接调用
+       			//createConsturctor[name] = prop[name];
+       			//将属性复制到类的原型中，类的实例也会拥有这个属性
+       		  createConsturctor.prototype[name] = prop[name];
+       		}
+       		
+       	}
+    }
+       return createConsturctor;//构造函数作为返回值
+	}
+	})();
+	//调用
+	var Person = Class.extend({
+		init : function(name){
+			this.name = name;
+		},
+		getName : function(){
+			return this.name;
+		} 
+	});
+	var Child = Class.extend(Person,{
+		init:function(name, id){
+          this.base(name);
+          this.id = id;
+		},
+		getId:function(){
+			return this.id;
+		},
+		getName:function(){
+			return this.base();
+		}
+	});
+	console.log(Person);
+	console.log(Child);
+	var p1 = new Person('wangjing');   
+	console.log(p1.getName());          //wangjing
+	var p2 = new Child('wj','123456');
+	console.log(p2.getName()+' '+p2.getId());
+
+
+
+
+
+	</script>
+
+
+</head>
+<body>
+
+</body>
+</html>

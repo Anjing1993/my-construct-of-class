@@ -1,0 +1,33 @@
+<<!DOCTYPE html>
+<html>
+<head>
+	<title></title>
+	<script type="text/javascript" src="base2-new.js"></script>
+	<script type="text/javascript">
+      var Person = Base.extend({ 
+           constructor: function (name) { this.name = name; }, 
+           getName: function () { return this.name; }
+       });
+      var User = Person.extend({ 
+           constructor: function (name, password) { 
+               this.base(name); 
+               this.password = password; 
+           }, 
+           getPassWord: function () { return this.password; } 
+       }); 
+       
+       //父级
+       var p = new Person("i am Person"); 
+       console.log(p.getName()); 
+       //一级子类
+       var u = new User("i am User", "password is 123456"); 
+       console.log(u.getName()); 
+       console.log(u.getPassWord()); 
+      
+
+	</script>
+</head>
+<body>
+
+</body>
+</html>
